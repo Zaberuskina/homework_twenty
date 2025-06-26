@@ -1,2 +1,3 @@
 LOGIN="user1"
 PASSWORD="1234"
+URL="selenoid.autotests.cloud"
