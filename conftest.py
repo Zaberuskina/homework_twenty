@@ -1,40 +1,46 @@
-import pytest
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selene.support.shared import browser
+import pytest
 from dotenv import load_dotenv
+from selene import browser
+from selenium.webdriver import ChromeOptions
+from selenium import webdriver
+
 from utils import attach
 
-@pytest.fixture(scope="session", autouse=True)
+
+@pytest.fixture(scope='session', autouse=True)
 def load_env():
     load_dotenv()
 
-@pytest.fixture(scope="function", autouse=True)
+
+@pytest.fixture(scope='function', autouse=True)
 def setup_browser():
-    options = Options()
+    options = ChromeOptions()
     selenoid_capabilities = {
         "browserName": "chrome",
         "browserVersion": "128.0",
         "selenoid:options": {
             "enableVNC": True,
-            "enableVideo": True
-        }
+            "enableVideo": True,
+            "enableLog": True
+        },
+        "goog:loggingPrefs": {"browser": "ALL"}
     }
-    options.set_capability("selenoid:options", selenoid_capabilities["selenoid:options"])
-    options.set_capability("browserName", selenoid_capabilities["browserName"])
-    options.set_capability("browserVersion", selenoid_capabilities["browserVersion"])
+    options.set_capability('selenoid:options', selenoid_capabilities["selenoid:options"])
+    options.set_capability('browserName', selenoid_capabilities["browserName"])
+    options.set_capability('browserVersion', selenoid_capabilities["browserVersion"])
+    options.set_capability('goog:loggingPrefs', selenoid_capabilities["goog:loggingPrefs"])
 
-    remote_url = f"https://{os.getenv('LOGIN')}:{os.getenv('PASSWORD')}@selenoid.autotests.cloud/wd/hub"
+    login = os.getenv('LOGIN')
+    password = os.getenv('PASSWORD')
+    url = os.getenv('URL')
 
-    driver = webdriver.Remote(
-        command_executor=remote_url,
+    browser.config.driver = webdriver.Remote(
+        command_executor=f'https://{login}:{password}@{url}/wd/hub',
         options=options
     )
-
-    browser.config.driver = driver
-    browser.config.base_url = "https://demoqa.com"
-    browser.config.timeout = 10
+    browser.config.window_width = 1920
+    browser.config.window_height = 1080
 
     yield
 
@@ -42,5 +48,4 @@ def setup_browser():
     attach.add_logs(browser)
     attach.add_html(browser)
     attach.add_video(browser)
-
     browser.quit()
