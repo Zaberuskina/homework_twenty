@@ -1,11 +1,16 @@
 import pytest
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selene.support.shared import browser
-
+from dotenv import load_dotenv
 from utils import attach
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
+def load_env():
+    load_dotenv()
+
+@pytest.fixture(scope="function", autouse=True)
 def setup_browser():
     options = Options()
     selenoid_capabilities = {
@@ -16,10 +21,14 @@ def setup_browser():
             "enableVideo": True
         }
     }
-    options.capabilities.update(selenoid_capabilities)
+    options.set_capability("selenoid:options", selenoid_capabilities["selenoid:options"])
+    options.set_capability("browserName", selenoid_capabilities["browserName"])
+    options.set_capability("browserVersion", selenoid_capabilities["browserVersion"])
+
+    remote_url = f"https://{os.getenv('LOGIN')}:{os.getenv('PASSWORD')}@selenoid.autotests.cloud/wd/hub"
 
     driver = webdriver.Remote(
-        command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
+        command_executor=remote_url,
         options=options
     )
 
